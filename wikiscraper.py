@@ -14,7 +14,7 @@ import subprocess
 YOUTUBE_SEARCH_URL = "https://www.youtube.com/results"
 MAX_RESULTS = 3
 COOLDOWN_TIME = 0.5 
-
+BAD_VIDEOS = []
 
 def extract_link_or_contents_text(item: BeautifulSoup):
     text = item.find('a').get_text() if item.find('a') else item.get_text()
@@ -64,14 +64,14 @@ def get_artists_and_songs(url: str) -> Tuple[List[str], List[str]]:
 
 
 
-def _extract_yt_initial_data(html: str) -> dict:
+def _extract_yt_initial_data(html: str, title) -> dict:
     match = re.search(r"ytInitialData\s*=\s*(\{.*?\});", html, re.DOTALL)
     if not match:
         match = re.search(r"var ytInitialData = (\{.*?\});", html, re.DOTALL)
     if not match:
-        print(html)
-        raise ValueError("Unable to locate YouTube initial data")
-        
+        print("ERROR WHEN LOADING VIDEO " + title)
+        BAD_VIDEOS.append(title)
+        return {}
     return json.loads(match.group(1))
 
 
@@ -95,7 +95,7 @@ def search_by_artist(artist_name: str) -> List[str]:
     )
     response.raise_for_status()
 
-    data = _extract_yt_initial_data(response.text)
+    data = _extract_yt_initial_data(response.text, artist_name)
     links: List[str] = []
     seen = set()
 
@@ -119,7 +119,7 @@ def search_by_song(song) -> List[str]:
     )
     response.raise_for_status()
 
-    data = _extract_yt_initial_data(response.text)
+    data = _extract_yt_initial_data(response.text, song)
     links: List[str] = []
     seen = set()
 
