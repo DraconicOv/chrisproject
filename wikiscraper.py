@@ -1,5 +1,5 @@
 
-import getopt
+import argparse
 
 import requests
 from bs4 import BeautifulSoup, NavigableString
@@ -139,27 +139,15 @@ def main() -> None:
     if (sys.argv.__len__() == 1):
         print("Usage: wikivideopopulator.exe -a article -t timeout")
         return
-    
-    args = sys.argv[1:]
-    options = "hadt:"
-    long_options = ["help", "article",  "timeout"]
-    article, timeout = "",  COOLDOWN_TIME
+
+    parser = argparse.ArgumentParser(description="Scrape a Wikipedia page and download matching YouTube audio.")
+    parser.add_argument("-a", "--article", required=True, help="Wikipedia article URL")
+    parser.add_argument("-t", "--timeout", type=float, default=COOLDOWN_TIME, help="Delay between requests")
+    parsed_args = parser.parse_args()
+
+    article = parsed_args.article
+    timeout = parsed_args.timeout
     videos = []
-    try:
-        arguments, values = getopt.getopt(args, options, long_options)
-        for currentArg, currentVal in arguments:
-            if currentArg in ("-h", "--Help"):
-                print("Usage: wikivideopopulator.exe -a wikipedia_article_song_path -d ytdlp_executable_path -t timeout")
-            elif currentArg in ("-a", "--article"):
-                article = currentVal
-            # elif currentArg in ("-d", "--downloader-path"):
-            #     downloader = currentVal
-            elif currentArg in ("-t", "--timeout"):
-                timeout = int(currentVal)
-    except getopt.error as err:
-        print(str(err))
-    if (article == ""):
-        raise(RuntimeError(Exception("article parameter is required, specify with '-a' followed by the url")))
     title = article.split("/wiki/")
     if (len(title) > 1):
         title = title[1].split("#")[0]
@@ -167,10 +155,10 @@ def main() -> None:
     artists, songs = get_artists_and_songs(article)
     for artist in artists:
         videos.extend(search_by_artist(artist))
-        time.sleep(COOLDOWN_TIME)
+        time.sleep(timeout)
     for song in songs:
         videos.extend(search_by_song(song))
-        time.sleep(COOLDOWN_TIME)
+        time.sleep(timeout)
     cookie_file = '"C:\\Users\\Chris\\OneDrive\\Documents\\yt-dlp_win\\edge_cookies.txt'
     for video in videos:
         subprocess.run(["powershell", "-Command", f'C:\\Users\\Chris\\OneDrive\\Documents\\yt-dlp_win\\yt-dlp -x --audio-format mp3 --cookies {cookie_file} --embed-thumbnail --add-metadata {video} | Tee-Object -FilePath:C:\\Users\\Chris\\OneDrive\\Documents\\yt-dlp_win\\logmp3.txt -Append'])
