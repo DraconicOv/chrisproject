@@ -160,7 +160,10 @@ def main() -> None:
         print(str(err))
     if (article == ""):
         raise(RuntimeError(Exception("article parameter is required, specify with '-a' followed by the url")))
-        
+    title = article.split("/wiki/")
+    if (len(title) > 1):
+        title = title[1].split("#")[0]
+        article = f'https://en.wikipedia.org/w/index.php?title={title}&useparsoid=0'
     artists, songs = get_artists_and_songs(article)
     for artist in artists:
         videos.extend(search_by_artist(artist))
